@@ -20,6 +20,57 @@ app.mount("/static", StaticFiles(directory=os.path.join(Path(__file__).parent,
           "static")), name="static")
 
 # In-memory activity database
+# Additional activities to be added at app startup
+additional_activities = {
+    # Sports (2)
+    "Basketball Team": {
+        "description": "Competitive basketball team practicing fundamentals and playing inter-school matches",
+        "schedule": "Tuesdays and Thursdays, 5:00 PM - 7:00 PM",
+        "max_participants": 15,
+        "participants": ["alex@mergington.edu", "noah@mergington.edu"]
+    },
+    "Swimming Club": {
+        "description": "Technique, conditioning, and friendly swim meets for all skill levels",
+        "schedule": "Mondays and Wednesdays, 4:00 PM - 5:30 PM",
+        "max_participants": 20,
+        "participants": ["mia@mergington.edu"]
+    },
+
+    # Artistic (2)
+    "Drama Club": {
+        "description": "Acting, stagecraft, and production of one play per term",
+        "schedule": "Fridays, 4:00 PM - 6:00 PM",
+        "max_participants": 25,
+        "participants": ["isabella@mergington.edu", "lucas@mergington.edu"]
+    },
+    "Art Society": {
+        "description": "Painting, drawing, and portfolio development with exhibitions each semester",
+        "schedule": "Wednesdays, 3:30 PM - 5:00 PM",
+        "max_participants": 30,
+        "participants": ["amelia@mergington.edu"]
+    },
+
+    # Intellectual (2)
+    "Math Olympiad": {
+        "description": "Advanced problem solving and preparation for regional/national contests",
+        "schedule": "Thursdays, 3:30 PM - 5:00 PM",
+        "max_participants": 18,
+        "participants": ["ethan@mergington.edu"]
+    },
+    "Debate Team": {
+        "description": "Competitive debating, public speaking skills, and tournament participation",
+        "schedule": "Mondays, 3:30 PM - 5:00 PM",
+        "max_participants": 20,
+        "participants": ["ava@mergington.edu", "mateo@mergington.edu"]
+    }
+}
+
+@app.on_event("startup")
+def register_additional_activities():
+    # Merge additional activities into the in-memory activities store without overwriting existing keys
+    for name, info in additional_activities.items():
+        if name not in globals().get("activities", {}):
+            activities[name] = info
 activities = {
     "Chess Club": {
         "description": "Learn strategies and compete in chess tournaments",
@@ -61,7 +112,9 @@ def signup_for_activity(activity_name: str, email: str):
 
     # Get the specific activity
     activity = activities[activity_name]
-
+# Validate student is not already signed up
+    if email in activity["participants"]:
+        raise HTTPException(status_code=400, detail="Student already signed up for this activity")
     # Add student
     activity["participants"].append(email)
     return {"message": f"Signed up {email} for {activity_name}"}
